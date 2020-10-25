@@ -24,6 +24,7 @@ def parse(path_to_file):
     imgs, headers, linkslen, lists = 0, 0, 0, 0
     # ищем картинки
     for img in bodytag.findAll('img'):
+        print(img)
         imgs += 1 if int(img['width'])>=200 else 0
     # ищем headers
     for header in bodytag.findAll(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
