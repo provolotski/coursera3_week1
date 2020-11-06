@@ -1,5 +1,5 @@
-from bs4 import BeautifulSoup
 import unittest
+from bs4 import BeautifulSoup
 import os
 
 
@@ -28,7 +28,7 @@ def get_header_count(soup):
 
 
 def get_max_tag_len(soup):
-    list = []
+    tag_list = []
     iterator = 0
     for i in soup:
         if i != '\n' and i.name is not None:
@@ -36,12 +36,12 @@ def get_max_tag_len(soup):
                 iterator += 1
             else:
                 if iterator > 0:
-                    list.append(iterator)
+                    tag_list.append(iterator)
                 iterator = 0
-            list.extend(get_max_tag_len(i))
+            tag_list.extend(get_max_tag_len(i))
     if iterator > 0:
-        list.append(iterator)
-    return list
+        tag_list.append(iterator)
+    return tag_list
 
 
 def get_max_list_len(soup):
@@ -87,71 +87,74 @@ def get_URL_list(path, page):
         body = soup.find(name='div', id="bodyContent")
         for i in body.findAll(name='a', href=True):
             if i['href'][0:6] == '/wiki/':
-                if os.path.isfile('wiki/' + i['href'][6:]):
+                if os.path.isfile('wiki/' + i['href'][6:]) and i['href'][6:] not in list:
                     list.append(i['href'][6:])
         return list
 
 
-def update_list(graph, full_list, current_list):
-    new_list = []
-    for i in current_list:
-        if (i not in graph.keys()) and (i not in full_list):
-            new_list.append(i)
-    return new_list
-
 
 def build_bridge(path, start_page, end_page):
-    """возвращает список страниц, по которым можно перейти по ссылкам со start_page на
-    end_page, начальная и конечная страницы включаются в результирующий список"""
-    graph = {}
-    list_url = []
-    graph[start_page] = get_URL_list(path, start_page)
-    if end_page not in graph[start_page]:
-        list_url += update_list(graph, list_url, graph[start_page])
-    while len(list_url) > 0:
-        next_url = list_url.pop()
-        if len(get_URL_list(path, next_url)) > 0:
-            graph[next_url] = get_URL_list(path, next_url)
-            if end_page not in graph[start_page]:
-                list_url += update_list(graph, list_url, graph[next_url])
-        print(f'len of list {len(list_url)}  list is {list_url}')
-      #  print(f'dicts is {graph}')
-
-    return graph
-    # напишите вашу реализацию логики по вычисления кратчайшего пути здесь
+    full = {}
+    if start_page == end_page:
+        return path
+    else:
+        flag = True
+        count = 1
+        full[count] = [[start_page]]
+        while flag:
+            for item in full[count]:
+                for node in get_URL_list(path, item[-1]):
+                    if node not in item:
+                        if node == end_page:
+                            result_path = item.copy()
+                            result_path.append(node)
+                            flag = False
+                        else:
+                            item_path = item.copy()
+                            item_path.append(node)
+                            if full.get(count + 1) is None:
+                                full[count + 1] = [item_path]
+                            else:
+                                lst = full.get(count + 1)
+                                lst.append(item_path)
+                                full[count + 1] = lst
+            count += 1
+        return result_path
 
 
 def get_statistics(path, start_page, end_page):
     """собирает статистику со страниц, возвращает словарь, где ключ - название страницы,
     значение - список со статистикой страницы"""
-
     # получаем список страниц, с которых необходимо собрать статистику
     pages = build_bridge(path, start_page, end_page)
     # напишите вашу реализацию логики по сбору статистики здесь
-    statistic = None
+    statistic = {}
+    for page in pages:
+        statistic[page] = parse(path+page)
     return statistic
 
 
-class TestParse(unittest.TestCase):
-    def test_parse(self):
-        test_cases = (
-            ('wiki/Stone_Age', [13, 10, 12, 40]),
-            ('wiki/Brain', [19, 5, 25, 11]),
-            ('wiki/Artificial_intelligence', [8, 19, 13, 198]),
-            ('wiki/Python_(programming_language)', [2, 5, 17, 41]),
-            ('wiki/Spectrogram', [1, 2, 4, 7]),)
+# class TestParse(unittest.TestCase):
+#     def test_parse(self):
+#         test_cases = (
+#             ('wiki/Stone_Age', [13, 10, 12, 40]),
+#             ('wiki/Brain', [19, 5, 25, 11]),
+#             ('wiki/Artificial_intelligence', [8, 19, 13, 198]),
+#             ('wiki/Python_(programming_language)', [2, 5, 17, 41]),
+#             ('wiki/Spectrogram', [1, 2, 4, 7]),)
+#
+#         for path, expected in test_cases:
+#             with self.subTest(path=path, expected=expected):
+#                 self.assertEqual(parse(path), expected)
 
-        for path, expected in test_cases:
-            with self.subTest(path=path, expected=expected):
-                self.assertEqual(parse(path), expected)
+    # def test_path(self):
+    #     test_cases = (
+    #         (('wiki/', 'The_New_York_Times', 'Stone_Age'),
+    #          ['The_New_York_Times', 'London', 'Woolwich', 'Iron_Age', 'Stone_Age']),
+    #         (('wiki/', 'The_New_York_Times', 'The_New_York_Times'),
+    #          ['The_New_York_Times']),
+    #     )
+    #     for arg, res in test_cases:
+    #         self.assertEqual(generate_bridge(arg), res)
 
 
-def test_case():
-    result = build_bridge('wiki/', 'The_New_York_Times', 'Stone_Age')
-    print(result)
-    print(len(result))
-
-
-if __name__ == '__main__':
-    # unittest.main()
-    test_case()
