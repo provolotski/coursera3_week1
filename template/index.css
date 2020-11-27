@@ -1,0 +1,33 @@
+* {
+    border: 1px solid red
+}
+
+.aside-block {
+    float: right;
+    width: 30%;
+}
+
+.main-block {
+    float: left;
+    width: 63%;
+}
+
+.avatar-block{
+    float: left;
+    width: 30%;
+}
+.question-block{
+    float: right;
+    width: 70%;
+}
+.answer-block{
+    float: left;
+    width: 63%;
+}
+.user-answer-block{
+    float: left;
+    width: 63%;
+}
+#author-avatar{
+    height: 128px;
+}
